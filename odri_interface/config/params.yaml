@@ -1,5 +1,5 @@
 robot_interface:
   ros__parameters:
-    robot_yaml_path: "/home/pepms/wsros2/mpc-ws/src/odri_ros2/odri_examples/config/robots/separate_legs.yaml"
-    adapter_name: "enp61s0"
+    robot_yaml_path: "/home/hugo/libraries/odri_ros2/odri_examples/config/robots/separate_legs.yaml"
+    adapter_name: "eno1"
     n_slaves: 1

@@ -40,7 +40,7 @@ RobotInterface::~RobotInterface() {}
 void RobotInterface::declareParameters()
 {
     declare_parameter<std::string>("robot_yaml_path", "");
-    declare_parameter<std::string>("adapter_name", "enp61s0");
+    declare_parameter<std::string>("adapter_name", "eno1");
     declare_parameter<int>("n_slaves", 1);
 
     get_parameter<std::string>("robot_yaml_path", params_.robot_yaml_path);
