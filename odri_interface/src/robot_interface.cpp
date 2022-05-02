@@ -91,7 +91,16 @@ void RobotInterface::callbackTimerSendCommands()
             break;
     }
 
-    odri_robot_->SendCommand();
+    if(odri_robot_->SendCommandAndWaitEndOfCycle(0.001) == false) // Test for security
+    {
+        sm_active_state_ = SmStates::Idle;
+        Eigen::VectorXd vec_zero = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
+        odri_robot_->joints->SetTorques(vec_zero);
+        odri_robot_->joints->SetDesiredPositions(vec_zero);
+        odri_robot_->joints->SetDesiredVelocities(vec_zero);
+        odri_robot_->joints->SetPositionGains(vec_zero);
+        odri_robot_->joints->SetVelocityGains(vec_zero);
+    }
 }
 
 void RobotInterface::callbackRobotCommand(const odri_msgs::msg::RobotCommand::SharedPtr msg)
