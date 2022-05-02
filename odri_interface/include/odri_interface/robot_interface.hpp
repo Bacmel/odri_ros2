@@ -80,6 +80,7 @@ class RobotInterface : public rclcpp::Node
     SmStates                                          sm_active_state_;
     static const std::map<std::string, SmTransitions> sm_transitions_map;
     static const std::map<SmStates, std::string>      sm_states_map;
+    bool                                              is_calibrated_;
 
     static std::map<std::string, SmTransitions> createSmTransitionsMap();
     static std::map<SmStates, std::string>      createSmStatesMap();

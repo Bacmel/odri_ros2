@@ -33,6 +33,7 @@ RobotInterface::RobotInterface(const std::string& node_name) : rclcpp::Node(node
     max_currents_   = positions_;
 
     sm_active_state_ = SmStates::Idle;
+    is_calibrated_ = false;
 }
 
 RobotInterface::~RobotInterface() {}
@@ -91,15 +92,10 @@ void RobotInterface::callbackTimerSendCommands()
             break;
     }
 
-    if(odri_robot_->SendCommandAndWaitEndOfCycle(0.001) == false) // Test for security
+    if(odri_robot_->SendCommand() == false) // Test for security
     {
         sm_active_state_ = SmStates::Idle;
-        Eigen::VectorXd vec_zero = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
-        odri_robot_->joints->SetTorques(vec_zero);
-        odri_robot_->joints->SetDesiredPositions(vec_zero);
-        odri_robot_->joints->SetDesiredVelocities(vec_zero);
-        odri_robot_->joints->SetPositionGains(vec_zero);
-        odri_robot_->joints->SetVelocityGains(vec_zero);
+        is_calibrated_ = false;
     }
 }
 
@@ -171,7 +167,7 @@ void RobotInterface::transitionRequest(const std::shared_ptr<odri_msgs::srv::Tra
 bool RobotInterface::smEnable(std::string& message)
 {
     if (sm_active_state_ == SmStates::Idle) {
-        if (odri_robot_->GetJoints()->SawAllIndices()) {
+        if (is_calibrated_) {
             message = "ODRI enabled";
             return true;
         } else {
@@ -224,6 +220,8 @@ bool RobotInterface::smCalibrateFromCalibrating(std::string& message)
     odri_robot_->GetJoints()->SetPositionOffsets(-current_pos);
 
     message = "Calibration done";
+    
+    is_calibrated_ = true;
 
     return true;
 }
