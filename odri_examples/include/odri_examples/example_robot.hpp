@@ -12,49 +12,46 @@
 
 class ExampleRobot : public rclcpp::Node
 {
-public:
-  explicit ExampleRobot(const std::string &node_name);
-  virtual ~ExampleRobot();
+    public:
+    explicit ExampleRobot(const std::string &node_name);
+    virtual ~ExampleRobot();
 
-private:
-  void callbackTimerChangeCommand();
-  void callbackTimerPublishCommand();
-  void callbackRobotState(const odri_msgs::msg::RobotState::SharedPtr msg);
-  rcl_interfaces::msg::SetParametersResult callbackParameters(
-      const std::vector<rclcpp::Parameter> &parameters);
+    private:
+    void callbackTimerChangeCommand();
+    void callbackTimerPublishCommand();
+    void callbackRobotState(const odri_msgs::msg::RobotState::SharedPtr msg);
 
-private:
-  rclcpp::TimerBase::SharedPtr timer_change_command_;
-  rclcpp::TimerBase::SharedPtr timer_publish_command_;
+    rcl_interfaces::msg::SetParametersResult callbackParameters(const std::vector<rclcpp::Parameter> &parameters);
 
-  rclcpp::Subscription<odri_msgs::msg::RobotState>::SharedPtr sub_robot_state_;
-  rclcpp::Publisher<odri_msgs::msg::RobotCommand>::SharedPtr pub_robot_command_;
+    private:
+    rclcpp::TimerBase::SharedPtr timer_change_command_;
+    rclcpp::TimerBase::SharedPtr timer_publish_command_;
 
-  rclcpp::Client<odri_msgs::srv::TransitionCommand>::SharedPtr client_odri_interface_;
+    rclcpp::Subscription<odri_msgs::msg::RobotState>::SharedPtr  sub_robot_state_;
+    rclcpp::Publisher<odri_msgs::msg::RobotCommand>::SharedPtr   pub_robot_command_;
+    rclcpp::Client<odri_msgs::srv::TransitionCommand>::SharedPtr client_odri_interface_;
 
-  OnSetParametersCallbackHandle::SharedPtr callback_handle_;
+    OnSetParametersCallbackHandle::SharedPtr callback_handle_;
 
-  std::chrono::high_resolution_clock::time_point t_last_mb_command_;
-  std::chrono::milliseconds t_before_zero_commands_;
+    std::chrono::high_resolution_clock::time_point t_last_mb_command_;
+    std::chrono::milliseconds                      t_before_zero_commands_;
 
-  odri_msgs::msg::RobotCommand msg_robot_command_;
+    odri_msgs::msg::RobotCommand msg_robot_command_;
 
-  struct WaveParams
-  {
-    double amplitude;
-    double freq;
-    double t;
-    double dt;
-  } wave_params_;
+    struct WaveParams {
+        double amplitude;
+        double freq;
+        double t;
+        double dt;
+    } wave_params_;
 
-  bool brought_to_init_;
-  Eigen::Vector2d pos_error_;
+    bool            brought_to_init_;
+    Eigen::Vector2d pos_error_;
 
-  struct Params
-  {
-    bool publish_commands;
-  } params_;
+    struct Params {
+        bool publish_commands;
+    } params_;
 
-  bool got_initial_position_;
-  std::size_t counter_initial_position_;
+    bool        got_initial_position_;
+    std::size_t counter_initial_position_;
 };
