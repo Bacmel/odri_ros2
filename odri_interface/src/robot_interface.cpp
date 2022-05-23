@@ -2,12 +2,10 @@
 
 namespace odri_interface
 {
-RobotInterface::RobotInterface(const std::string& node_name) : rclcpp::Node(node_name)
+RobotInterface::RobotInterface(const std::string &node_name) : rclcpp::Node(node_name)
 {
     declareParameters();
-    odri_robot_ = odri_control_interface::RobotFromYamlFile(params_.robot_yaml_path);
-    odri_robot_->Start();
-    odri_robot_->WaitUntilReady();
+    createOdriRobot(params_.robot_yaml_path);
 
     service_sm_transition_ = create_service<odri_msgs::srv::TransitionCommand>(
         std::string(std::string(get_name()) + "/state_transition").c_str(),
@@ -33,7 +31,6 @@ RobotInterface::RobotInterface(const std::string& node_name) : rclcpp::Node(node
     max_currents_   = positions_;
 
     sm_active_state_ = SmStates::Idle;
-    is_calibrated_ = false;
 }
 
 RobotInterface::~RobotInterface() {}
@@ -41,14 +38,14 @@ RobotInterface::~RobotInterface() {}
 void RobotInterface::declareParameters()
 {
     declare_parameter<std::string>("robot_yaml_path", "");
-    declare_parameter<std::string>("adapter_name", "eno1");
-    declare_parameter<int>("n_slaves", 1);
-
     get_parameter<std::string>("robot_yaml_path", params_.robot_yaml_path);
-    get_parameter<std::string>("adapter_name", params_.adapter_name);
-    int n_slaves;
-    get_parameter<int>("n_slaves", n_slaves);
-    params_.n_slaves = n_slaves;
+}
+
+void RobotInterface::createOdriRobot(const std::string &robot_yaml_path)
+{
+    odri_robot_ = odri_control_interface::RobotFromYamlFile(robot_yaml_path);
+    odri_robot_->Start();
+    odri_robot_->WaitUntilReady();
 }
 
 void RobotInterface::callbackTimerSendCommands()
@@ -61,7 +58,8 @@ void RobotInterface::callbackTimerSendCommands()
     robot_state_msg_.header.stamp = get_clock()->now();
     robot_state_msg_.motor_states.clear();
 
-    for (std::size_t i = 0; i < positions_.size(); ++i) {
+    for (std::size_t i = 0; i < positions_.size(); ++i)
+    {
         odri_msgs::msg::MotorState m_state;
 
         m_state.position = positions_(i);
@@ -71,7 +69,8 @@ void RobotInterface::callbackTimerSendCommands()
     }
     pub_robot_state_->publish(robot_state_msg_);
 
-    switch (sm_active_state_) {
+    switch (sm_active_state_)
+    {
         case SmStates::Enabled:
             odri_robot_->joints->SetTorques(des_torques_);  // WARNING: mixing current and torques. Change the msg
             odri_robot_->joints->SetDesiredPositions(des_positions_);
@@ -81,6 +80,8 @@ void RobotInterface::callbackTimerSendCommands()
             odri_robot_->joints->SetMaximumCurrents(
                 max_currents_(0));  // WARNING: Max current is common for all joints
             break;
+
+        case SmStates::Disabled:
         case SmStates::Idle:
         case SmStates::Calibrating:
             Eigen::VectorXd vec_zero = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
@@ -92,22 +93,28 @@ void RobotInterface::callbackTimerSendCommands()
             break;
     }
 
-    if(odri_robot_->SendCommand() == false) // Test for security
+    if (!odri_robot_->SendCommand())
     {
-        sm_active_state_ = SmStates::Idle;
-        is_calibrated_ = false;
+        odri_robot_->ReportError();
+        createOdriRobot(params_.robot_yaml_path);
+        sm_active_state_ = SmStates::Disabled;
+        RCLCPP_INFO_STREAM(get_logger(), "\nError detected: odri in DESABLED state.");
     }
 }
 
 void RobotInterface::callbackRobotCommand(const odri_msgs::msg::RobotCommand::SharedPtr msg)
 {
-    for (std::size_t i = 0; i < msg->motor_commands.size(); ++i) {
-        des_torques_(i)    = msg->motor_commands[i].current_ref;
-        des_positions_(i)  = msg->motor_commands[i].position_ref;
-        des_velocities_(i) = msg->motor_commands[i].velocity_ref;
-        des_pos_gains_(i)  = msg->motor_commands[i].kp;
-        des_vel_gains_(i)  = msg->motor_commands[i].kd;
-        max_currents_(i)   = msg->motor_commands[i].i_sat;
+    if (sm_active_state_ == SmStates::Enabled)
+    {
+        for (std::size_t i = 0; i < msg->motor_commands.size(); ++i)
+        {
+            des_torques_(i)    = msg->motor_commands[i].torque_ref;
+            des_positions_(i)  = msg->motor_commands[i].position_ref;
+            des_velocities_(i) = msg->motor_commands[i].velocity_ref;
+            des_pos_gains_(i)  = msg->motor_commands[i].kp;
+            des_vel_gains_(i)  = msg->motor_commands[i].kd;
+            max_currents_(i)   = msg->motor_commands[i].i_sat;
+        }
     }
 }
 
@@ -117,45 +124,82 @@ void RobotInterface::transitionRequest(const std::shared_ptr<odri_msgs::srv::Tra
     RCLCPP_INFO_STREAM(get_logger(), "Service request received");
 
     SmTransitions command = SmTransitions::NbTransitions;
-    if (sm_transitions_map.find(request->command) != sm_transitions_map.end()) {
+    if (sm_transitions_map.find(request->command) != sm_transitions_map.end())
+    {
         command = sm_transitions_map.at(request->command);
     }
 
-    switch (command) {
-        case SmTransitions::Enable:
-            response->accepted = smEnable(response->message);
-            if (response->accepted) {
-                sm_active_state_ = SmStates::Enabled;
-            }
-            break;
-
+    switch (command)
+    {
         case SmTransitions::Disable:
-            response->accepted = smDisable(response->message);
-            if (response->accepted) {
-                sm_active_state_ = SmStates::Idle;
+            if (sm_active_state_ == SmStates::Calibrating)
+            {
+                response->accepted = smDisable(response->message);
+                if (response->accepted)
+                {
+                    sm_active_state_ = SmStates::Disabled;
+                }
+            }
+            else if (sm_active_state_ == SmStates::Enabled)
+            {
+                response->accepted = smDisable(response->message);
+                if (response->accepted)
+                {
+                    sm_active_state_ = SmStates::Idle;
+                }
+            }
+            else
+            {
+                response->accepted = false;
+                response->message  = "Cannot disable the odri Interface. It is already in DISABLED/IDLE state.";
             }
             break;
 
         case SmTransitions::Calibrate:
-            if (sm_active_state_ == SmStates::Idle) {
-                response->accepted = smCalibrateFromIdle(response->message);
-                if (response->accepted) {
+            if (sm_active_state_ == SmStates::Disabled || sm_active_state_ == SmStates::Idle)
+            {
+                sm_active_state_   = SmStates::Disabled;
+                response->accepted = smStartCalibration(response->message);
+                if (response->accepted)
+                {
                     sm_active_state_ = SmStates::Calibrating;
                 }
-            } else if (sm_active_state_ == SmStates::Calibrating) {
-                response->accepted = smCalibrateFromCalibrating(response->message);
-                if (response->accepted) {
+            }
+            else if (sm_active_state_ == SmStates::Calibrating)
+            {
+                response->accepted = smFinishCalibration(response->message);
+                if (response->accepted)
+                {
                     sm_active_state_ = SmStates::Idle;
                 }
-            } else {
+            }
+            else
+            {
                 response->accepted = false;
-                response->message  = "Cannot CALIBRATE the odri Interface. It is not in the IDLE/CALIBRATING state.";
+                response->message  = "Cannot calibrate the odri Interface. It is not in the DISABLED/IDLE state.";
             }
             break;
+
+        case SmTransitions::Enable:
+            response->accepted = smEnable(response->message);
+            if (response->accepted)
+            {
+                sm_active_state_ = SmStates::Enabled;
+            }
+            break;
+
+        case SmTransitions::Stop:
+            response->accepted = smStop(response->message);
+            if (response->accepted)
+            {
+                sm_active_state_ = SmStates::Disabled;
+            }
+            break;
+
         default:
             response->accepted = false;
             response->message  = "Command: " + request->command +
-                                " does not exist. Possible options are: 'enable'|'disable'|'calibrate'";
+                                " does not exist. Possible options are: 'enable'|'disable'|'calibrate'|'stop'";
             RCLCPP_WARN_STREAM(get_logger(), response->message);
             break;
     }
@@ -164,34 +208,14 @@ void RobotInterface::transitionRequest(const std::shared_ptr<odri_msgs::srv::Tra
     RCLCPP_WARN_STREAM(get_logger(), response->message);
 }
 
-bool RobotInterface::smEnable(std::string& message)
+bool RobotInterface::smDisable(std::string &message)
 {
-    if (sm_active_state_ == SmStates::Idle) {
-        if (is_calibrated_) {
-            message = "ODRI enabled";
-            return true;
-        } else {
-            message = "Cannot enable ODRI. Run calibration first.";
-            return false;
-        }
-    } else {
-        message = "Cannot ENABLE the odri Interface. It is not in the IDLE state.";
-        return false;
-    }
+    sm_active_state_ = SmStates::Disabled;
+    message          = "ODRI disabled";
+    return true;
 }
 
-bool RobotInterface::smDisable(std::string& message)
-{
-    if (sm_active_state_ != SmStates::Idle) {
-        message = "ODRI disabled";
-        return true;
-    } else {
-        message = "ODRI interface is already in the IDLE state.";
-        return false;
-    }
-}
-
-bool RobotInterface::smCalibrateFromIdle(std::string& message)
+bool RobotInterface::smStartCalibration(std::string &message)
 {
     Eigen::VectorXd zero_vec = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
     odri_robot_->GetJoints()->SetPositionOffsets(zero_vec);
@@ -208,41 +232,62 @@ bool RobotInterface::smCalibrateFromIdle(std::string& message)
     return true;
 }
 
-bool RobotInterface::smCalibrateFromCalibrating(std::string& message)
+bool RobotInterface::smFinishCalibration(std::string &message)
 {
     RCLCPP_INFO_STREAM(get_logger(), "\nThese are the offsets");
     Eigen::VectorXd current_pos = odri_robot_->GetJoints()->GetPositions();
 
-    for (size_t i = 0; i < current_pos.size(); i++) {
+    for (size_t i = 0; i < current_pos.size(); i++)
+    {
         RCLCPP_INFO_STREAM(get_logger(), "Joint " << i << ": " << current_pos(i));
     }
 
     odri_robot_->GetJoints()->SetPositionOffsets(-current_pos);
 
     message = "Calibration done";
-    
-    is_calibrated_ = true;
 
+    return true;
+}
+
+bool RobotInterface::smEnable(std::string &message)
+{
+    if (sm_active_state_ == SmStates::Idle)
+    {
+        message = "Odri enabled";
+        return true;
+    }
+    else
+    {
+        message = "Cannot enable the odri Interface. It is not in the IDLE state.";
+        return false;
+    }
+}
+
+bool RobotInterface::smStop(std::string &message)
+{
+    odri_robot_->ReportError();
+    createOdriRobot(params_.robot_yaml_path);
+    message = "Odri disabled";
     return true;
 }
 
 std::map<std::string, RobotInterface::SmTransitions> RobotInterface::createSmTransitionsMap()
 {
     std::map<std::string, SmTransitions> m;
-    m["enable"]    = SmTransitions::Enable;
     m["disable"]   = SmTransitions::Disable;
     m["calibrate"] = SmTransitions::Calibrate;
-
+    m["enable"]    = SmTransitions::Enable;
+    m["stop"]      = SmTransitions::Stop;
     return m;
 }
 
 std::map<RobotInterface::SmStates, std::string> RobotInterface::createSmStatesMap()
 {
     std::map<SmStates, std::string> m;
+    m[SmStates::Disabled]    = "disabled";
+    m[SmStates::Calibrating] = "calibrating";
     m[SmStates::Idle]        = "idle";
     m[SmStates::Enabled]     = "enabled";
-    m[SmStates::Calibrating] = "calibrating";
-
     return m;
 }
 
@@ -253,7 +298,7 @@ const std::map<RobotInterface::SmStates, std::string> RobotInterface::sm_states_
 
 }  // namespace odri_interface
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
     std::shared_ptr<odri_interface::RobotInterface> master_board_iface =
