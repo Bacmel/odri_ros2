@@ -1,5 +1,5 @@
 robot:
-    interface: eno1
+    interface: enp61s0
     joint_modules:
         motor_numbers: [0, 1]
         motor_constants: 0.025
