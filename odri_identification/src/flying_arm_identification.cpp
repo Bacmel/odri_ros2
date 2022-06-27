@@ -10,7 +10,7 @@ FlyingArmIdentification::FlyingArmIdentification(const std::string &node_name) :
 
     pub_robot_command_ = create_publisher<odri_msgs::msg::RobotCommand>("robot_command", 1);
 
-    timer_publish_command_ = create_wall_timer(std::chrono::duration<double, std::milli>(1),
+    timer_publish_command_ = create_wall_timer(std::chrono::duration<double, std::milli>(2.5),
                                                std::bind(&FlyingArmIdentification::callbackTimerPublishCommand, this));
 
     callback_handle_ = this->add_on_set_parameters_callback(
@@ -35,7 +35,9 @@ FlyingArmIdentification::~FlyingArmIdentification() {}
 void FlyingArmIdentification::declareParameters()
 {
     declare_parameter<std::string>("trajectory_csv_path", "");
-    get_parameter<std::string>("robot_yaml_path", params_.trajectory_csv_path);
+    get_parameter<std::string>("trajectory_csv_path", params_.trajectory_csv_path);
+    std::cout << params_.trajectory_csv_path << std::endl;
+
 }
 
 void FlyingArmIdentification::createCommands()
@@ -48,6 +50,7 @@ void FlyingArmIdentification::createCommands()
     std::fstream file(params_.trajectory_csv_path, std::ios::in);
     if (file.is_open())
     {
+        RCLCPP_INFO(this->get_logger(), "File open.");
         getline(file, line);         // remove first line of csv
         while (getline(file, line))  // TODO: Refactoring
         {
@@ -82,6 +85,8 @@ void FlyingArmIdentification::createCommands()
 
             command_params_.commands.push_back(set_point);
         }
+    } else {
+        RCLCPP_INFO(this->get_logger(), "File not open.");
     }
 }
 
