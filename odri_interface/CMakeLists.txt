@@ -15,7 +15,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(odri_msgs REQUIRED)
-find_package(odri_control_interface)
+find_package(odri_control_interface REQUIRED)
 
 set(ODRI_INTERFACE_SRC src/robot_interface.cpp)
 

@@ -30,7 +30,7 @@ RobotInterface::RobotInterface(const std::string &node_name) : rclcpp::Node(node
     des_vel_gains_  = positions_;
     max_currents_   = positions_;
 
-    sm_active_state_ = SmStates::Idle;
+    sm_active_state_ = SmStates::Disabled;
 }
 
 RobotInterface::~RobotInterface() {}
@@ -81,9 +81,7 @@ void RobotInterface::callbackTimerSendCommands()
                 max_currents_(0));  // WARNING: Max current is common for all joints
             break;
 
-        case SmStates::Disabled:
-        case SmStates::Idle:
-        case SmStates::Calibrating:
+        default:
             Eigen::VectorXd vec_zero = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
             odri_robot_->joints->SetTorques(vec_zero);
             odri_robot_->joints->SetDesiredPositions(vec_zero);
