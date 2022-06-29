@@ -17,15 +17,17 @@ def generate_launch_description():
                            executable='robot_interface',
                            parameters=[odri_iface_config],
                            output='screen',
-                           remappings=[("robot_state", "/odri/robot_state"), ("robot_command", "/odri/robot_command")])
+                           remappings=[('robot_state', '/odri/robot_state'), ('robot_command', '/odri/robot_command')])
 
     odri_identification_node = Node(package='odri_identification',
                                     name='flying_arm_identification',
                                     executable='flying_arm_identification',
-                                    parameters=[{"trajectory_csv_path": trajectory_config}],
+                                    parameters=[{
+                                        'trajectory_csv_path': trajectory_config
+                                    }],
                                     output='screen',
-                                    remappings=[("robot_state", "/odri/robot_state"),
-                                                ("robot_command", "/odri/robot_command")])
+                                    remappings=[('robot_state', '/odri/robot_state'),
+                                                ('robot_command', '/odri/robot_command')])
 
     reconfigure = Node(package='rqt_reconfigure', name='rqt_reconfigure', executable='rqt_reconfigure')
 

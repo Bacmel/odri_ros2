@@ -37,7 +37,6 @@ void FlyingArmIdentification::declareParameters()
     declare_parameter<std::string>("trajectory_csv_path", "");
     get_parameter<std::string>("trajectory_csv_path", params_.trajectory_csv_path);
     std::cout << params_.trajectory_csv_path << std::endl;
-
 }
 
 void FlyingArmIdentification::createCommands()
@@ -85,7 +84,9 @@ void FlyingArmIdentification::createCommands()
 
             command_params_.commands.push_back(set_point);
         }
-    } else {
+    }
+    else
+    {
         RCLCPP_INFO(this->get_logger(), "File not open.");
     }
 }
@@ -122,11 +123,10 @@ void FlyingArmIdentification::callbackTimerPublishCommand()
             msg_robot_command_.motor_commands.push_back(command);
         }
         command_params_.curr_idx++;
-        if(command_params_.curr_idx >= command_params_.commands.size())
+        if (command_params_.curr_idx >= command_params_.commands.size())
         {
             command_params_.curr_idx = 0;
             params_.publish_commands = false;
-
         }
         pub_robot_command_->publish(msg_robot_command_);
     }

@@ -18,11 +18,11 @@
 
 class FlyingArmIdentification : public rclcpp::Node
 {
-    public:
+  public:
     explicit FlyingArmIdentification(const std::string &node_name);
     virtual ~FlyingArmIdentification();
 
-    private:
+  private:
     void declareParameters();
     void createCommands();
 
@@ -31,7 +31,7 @@ class FlyingArmIdentification : public rclcpp::Node
 
     rcl_interfaces::msg::SetParametersResult callbackParameters(const std::vector<rclcpp::Parameter> &parameters);
 
-    private:
+  private:
     rclcpp::TimerBase::SharedPtr timer_publish_command_;
 
     rclcpp::Subscription<odri_msgs::msg::RobotState>::SharedPtr  sub_robot_state_;
@@ -42,24 +42,27 @@ class FlyingArmIdentification : public rclcpp::Node
 
     odri_msgs::msg::RobotCommand msg_robot_command_;
 
-    struct SetPoint {
+    struct SetPoint
+    {
         double t;
         double pos[2];
         double vel[2];
         double acc[2];
     };
 
-    struct CommandParams {
+    struct CommandParams
+    {
         std::vector<SetPoint> commands;
-        std::size_t curr_idx{0};
+        std::size_t           curr_idx{0};
     } command_params_;
 
     bool            brought_to_init_;
     Eigen::Vector2d pos_error_;
 
-    struct Params {
+    struct Params
+    {
         std::string trajectory_csv_path;
-        bool publish_commands;
+        bool        publish_commands;
     } params_;
 
     bool        got_initial_position_;
