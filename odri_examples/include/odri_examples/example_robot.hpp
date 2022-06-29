@@ -12,18 +12,18 @@
 
 class ExampleRobot : public rclcpp::Node
 {
-    public:
+  public:
     explicit ExampleRobot(const std::string &node_name);
     virtual ~ExampleRobot();
 
-    private:
+  private:
     void callbackTimerChangeCommand();
     void callbackTimerPublishCommand();
     void callbackRobotState(const odri_msgs::msg::RobotState::SharedPtr msg);
 
     rcl_interfaces::msg::SetParametersResult callbackParameters(const std::vector<rclcpp::Parameter> &parameters);
 
-    private:
+  private:
     rclcpp::TimerBase::SharedPtr timer_change_command_;
     rclcpp::TimerBase::SharedPtr timer_publish_command_;
 
@@ -38,7 +38,8 @@ class ExampleRobot : public rclcpp::Node
 
     odri_msgs::msg::RobotCommand msg_robot_command_;
 
-    struct WaveParams {
+    struct WaveParams
+    {
         double amplitude;
         double freq;
         double t;
@@ -48,7 +49,8 @@ class ExampleRobot : public rclcpp::Node
     bool            brought_to_init_;
     Eigen::Vector2d pos_error_;
 
-    struct Params {
+    struct Params
+    {
         bool publish_commands;
     } params_;
 

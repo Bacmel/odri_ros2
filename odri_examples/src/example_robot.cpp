@@ -41,16 +41,21 @@ void ExampleRobot::callbackTimerPublishCommand()
     msg_robot_command_.header.stamp = get_clock()->now();
     msg_robot_command_.motor_commands.clear();
 
-    if (params_.publish_commands) {
-        for (std::size_t i = 0; i < 2; ++i) {
+    if (params_.publish_commands)
+    {
+        for (std::size_t i = 0; i < 2; ++i)
+        {
             odri_msgs::msg::MotorCommand command;
 
-            if (brought_to_init_) {
+            if (brought_to_init_)
+            {
                 command.position_ref = wave_params_.amplitude * sin(2 * M_PI * wave_params_.freq * wave_params_.t);
                 command.velocity_ref = 2. * M_PI * wave_params_.freq * wave_params_.amplitude *
                                        cos(2 * M_PI * wave_params_.freq * wave_params_.t);
                 command.kp = 5.;
-            } else {
+            }
+            else
+            {
                 command.position_ref = 0;
                 command.velocity_ref = 0;
                 command.kp           = 1;
@@ -81,11 +86,15 @@ rcl_interfaces::msg::SetParametersResult ExampleRobot::callbackParameters(
     result.successful = true;
     result.reason     = "success";
 
-    for (const auto &param : parameters) {
-        if (param.get_name() == "publish_commands") {
+    for (const auto &param : parameters)
+    {
+        if (param.get_name() == "publish_commands")
+        {
             params_.publish_commands = param.as_bool();
-            if (params_.publish_commands) {
-                while (!client_odri_interface_->wait_for_service(std::chrono::seconds(1))) {
+            if (params_.publish_commands)
+            {
+                while (!client_odri_interface_->wait_for_service(std::chrono::seconds(1)))
+                {
                     RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
                 }
 
