@@ -59,6 +59,7 @@ class RobotInterface : public rclcpp::Node
 
     Eigen::VectorXd positions_;
     Eigen::VectorXd velocities_;
+    Eigen::VectorXd torques_;
 
     Eigen::VectorXd des_torques_;
     Eigen::VectorXd des_positions_;
