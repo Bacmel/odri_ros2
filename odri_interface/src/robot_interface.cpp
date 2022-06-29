@@ -22,6 +22,7 @@ RobotInterface::RobotInterface(const std::string &node_name) : rclcpp::Node(node
 
     positions_  = Eigen::VectorXd::Zero(odri_robot_->joints->GetNumberMotors());
     velocities_ = positions_;
+    torques_    = positions_;
 
     des_torques_    = positions_;
     des_positions_  = positions_;
@@ -54,6 +55,7 @@ void RobotInterface::callbackTimerSendCommands()
 
     positions_  = odri_robot_->joints->GetPositions();
     velocities_ = odri_robot_->joints->GetVelocities();
+    torques_    = odri_robot_->joints->GetMeasuredTorques();
 
     robot_state_msg_.header.stamp = get_clock()->now();
     robot_state_msg_.motor_states.clear();
@@ -64,6 +66,7 @@ void RobotInterface::callbackTimerSendCommands()
 
         m_state.position = positions_(i);
         m_state.velocity = velocities_(i);
+        m_state.torque   = torques_(i);
 
         robot_state_msg_.motor_states.push_back(m_state);
     }
