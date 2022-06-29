@@ -122,6 +122,12 @@ void FlyingArmIdentification::callbackTimerPublishCommand()
             msg_robot_command_.motor_commands.push_back(command);
         }
         command_params_.curr_idx++;
+        if(command_params_.curr_idx >= command_params_.commands.size())
+        {
+            command_params_.curr_idx = 0;
+            params_.publish_commands = false;
+
+        }
         pub_robot_command_->publish(msg_robot_command_);
     }
 }
