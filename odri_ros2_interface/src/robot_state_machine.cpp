@@ -153,8 +153,9 @@ void RobotStateMachine::callbackRobotCommand(const odri_ros2_msgs::msg::RobotCom
     }
 }
 
-void RobotStateMachine::transitionRequest(const std::shared_ptr<odri_ros2_msgs::srv::TransitionCommand::Request>  request,
-                                          const std::shared_ptr<odri_ros2_msgs::srv::TransitionCommand::Response> response)
+void RobotStateMachine::transitionRequest(
+    const std::shared_ptr<odri_ros2_msgs::srv::TransitionCommand::Request>  request,
+    const std::shared_ptr<odri_ros2_msgs::srv::TransitionCommand::Response> response)
 {
     RCLCPP_INFO_STREAM(get_logger(), "Service request received");
 
@@ -282,18 +283,3 @@ bool RobotStateMachine::smStop()
 }
 
 }  // namespace odri_ros2_interface
-
-int main(int argc, char *argv[])
-{
-    rclcpp::init(argc, argv);
-    std::shared_ptr<odri_ros2_interface::RobotStateMachine> master_board_iface =
-        std::make_shared<odri_ros2_interface::RobotStateMachine>("RobotStateMachine");
-
-    rclcpp::executors::SingleThreadedExecutor executor;
-    executor.add_node(master_board_iface);
-
-    executor.spin();
-    rclcpp::shutdown();
-
-    return 0;
-}
