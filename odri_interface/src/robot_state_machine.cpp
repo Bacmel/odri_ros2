@@ -2,12 +2,13 @@
 
 namespace odri_ros2_interface
 {
+
 RobotStateMachine::RobotStateMachine(const std::string &node_name) : rclcpp::Node(node_name)
 {
     declareParameters();
     createOdriRobot(params_.robot_yaml_path);
 
-    pub_robot_state_ = create_publisher<odri_msgs::msg::RobotState>("robot_state", 1);
+    pub_robot_state_ = create_publisher<odri_msgs::msg::RobotFullState>("robot_state", 1);
 
     sub_motor_command_ = create_subscription<odri_msgs::msg::RobotCommand>(
         "robot_command", rclcpp::QoS(1),
@@ -19,18 +20,36 @@ RobotStateMachine::RobotStateMachine(const std::string &node_name) : rclcpp::Nod
         rmw_qos_profile_services_default);
 
     timer_send_commands_ = create_wall_timer(std::chrono::duration<double, std::milli>(1),
-                                             std::bind(&RobotStateMachine::callbackTimerSendCommands, this));
+                                             std::bind(&RobotStateMachine::callbackTimerSendCommand, this));
 
-    positions_  = Eigen::VectorXd::Zero(odri_robot_->joints->GetNumberMotors());
-    velocities_ = positions_;
-    torques_    = positions_;
+    // Init eigen vectors
+    const Eigen::VectorXd vec_zero = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
 
-    des_torques_    = positions_;
-    des_positions_  = positions_;
-    des_velocities_ = positions_;
-    des_pos_gains_  = positions_;
-    des_vel_gains_  = positions_;
-    max_currents_   = positions_;
+    positions_  = vec_zero;
+    velocities_ = vec_zero;
+    torques_    = vec_zero;
+
+    des_torques_    = vec_zero;
+    des_positions_  = vec_zero;
+    des_velocities_ = vec_zero;
+    des_pos_gains_  = vec_zero;
+    des_vel_gains_  = vec_zero;
+    max_currents_   = vec_zero;
+
+    params_.safety_position = vec_zero;
+    params_.safety_damping  = vec_zero;
+    params_.safety_gain     = vec_zero;
+
+    double offset = M_PI / 10;
+
+    params_.safety_position[0] = -M_PI + offset;
+    params_.safety_position[1] = M_PI / 2 - offset;
+
+    params_.safety_damping[0] = 0.5;
+    params_.safety_damping[1] = 0.5;
+
+    params_.safety_gain[0] = 2;
+    params_.safety_gain[1] = 2;
 
     current_state_ = StateType::Idle;
 }
@@ -41,10 +60,6 @@ void RobotStateMachine::declareParameters()
 {
     declare_parameter<std::string>("robot_yaml_path", "");
     get_parameter<std::string>("robot_yaml_path", params_.robot_yaml_path);
-    declare_parameter<std::string>("safety_position", "");
-    get_parameter<std::string>("safety_position", params_.safety_position);
-    declare_parameter<std::string>("safety_damping", "");
-    get_parameter<std::string>("safety_damping", params_.safety_damping);
 }
 
 void RobotStateMachine::createOdriRobot(const std::string &robot_yaml_path)
@@ -54,7 +69,7 @@ void RobotStateMachine::createOdriRobot(const std::string &robot_yaml_path)
     odri_robot_->WaitUntilReady();
 }
 
-void RobotInterface::callbackTimerSendCommands()
+void RobotStateMachine::callbackTimerSendCommand()
 {
     odri_robot_->ParseSensorData();
 
@@ -78,6 +93,7 @@ void RobotInterface::callbackTimerSendCommands()
     robot_state_msg_.sm_state = state_name_map.at(current_state_);
     pub_robot_state_->publish(robot_state_msg_);
 
+    const Eigen::VectorXd vec_zero = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
     switch (current_state_)
     {
         case StateType::Running:
@@ -91,16 +107,14 @@ void RobotInterface::callbackTimerSendCommands()
             break;
 
         case StateType::Enabled:
-            Eigen::VectorXd vec_zero = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
             odri_robot_->joints->SetTorques(vec_zero);
             odri_robot_->joints->SetDesiredPositions(params_.safety_position);
             odri_robot_->joints->SetDesiredVelocities(vec_zero);
-            odri_robot_->joints->SetPositionGains(params_.safety_damping);
+            odri_robot_->joints->SetPositionGains(params_.safety_gain);
             odri_robot_->joints->SetVelocityGains(params_.safety_damping);
             break;
 
         default:
-            Eigen::VectorXd vec_zero = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
             odri_robot_->joints->SetTorques(vec_zero);
             odri_robot_->joints->SetDesiredPositions(vec_zero);
             odri_robot_->joints->SetDesiredVelocities(vec_zero);
@@ -111,11 +125,9 @@ void RobotInterface::callbackTimerSendCommands()
 
     if (!odri_robot_->SendCommand())
     {
-        odri_robot_->ReportError();
-        RCLCPP_INFO_STREAM(get_logger(), "\nError detected: ");
         if (smStop())
         {
-            RCLCPP_INFO_STREAM(get_logger(), "odri go to ENABLED state.")
+            RCLCPP_INFO_STREAM(get_logger(), "odri go to ENABLED state.");
         }
         else
         {
@@ -166,6 +178,9 @@ void RobotStateMachine::transitionRequest(const std::shared_ptr<odri_msgs::srv::
         case TransitionType::Stop:
             response->accepted = smStop();
             break;
+        case TransitionType::Calibrate:
+            response->accepted = smCalibrate();
+            break;
         default:
             response->accepted = false;
             response->message  = "Command: " + request->command +
@@ -187,7 +202,6 @@ void RobotStateMachine::transitionRequest(const std::shared_ptr<odri_msgs::srv::
 
 bool RobotStateMachine::smDisable()
 {
-    odri_robot_->ReportError();
     createOdriRobot(params_.robot_yaml_path);
     current_state_ = StateType::Idle;
     return true;
@@ -197,7 +211,7 @@ bool RobotStateMachine::smCalibrate()
 {
     if (current_state_ == StateType::Idle)
     {
-        Eigen::VectorXd zero_vec = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
+        const Eigen::VectorXd zero_vec = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
         odri_robot_->GetJoints()->SetPositionOffsets(zero_vec);
 
         RCLCPP_INFO_STREAM(get_logger(), "\nCalibration procedure: Finding indexes...");
@@ -218,7 +232,7 @@ bool RobotStateMachine::smCalibrate()
 
 bool RobotStateMachine::smEnable()
 {
-    if (current_state_ == StateType::Idle)
+    if (current_state_ == StateType::Calibrating)
     {
         RCLCPP_INFO_STREAM(get_logger(), "\nThese are the offsets");
         Eigen::VectorXd current_pos = odri_robot_->GetJoints()->GetPositions();
@@ -267,6 +281,19 @@ bool RobotStateMachine::smStop()
     }
 }
 
-void
-
 }  // namespace odri_ros2_interface
+
+int main(int argc, char *argv[])
+{
+    rclcpp::init(argc, argv);
+    std::shared_ptr<odri_ros2_interface::RobotStateMachine> master_board_iface =
+        std::make_shared<odri_ros2_interface::RobotStateMachine>("RobotStateMachine");
+
+    rclcpp::executors::SingleThreadedExecutor executor;
+    executor.add_node(master_board_iface);
+
+    executor.spin();
+    rclcpp::shutdown();
+
+    return 0;
+}

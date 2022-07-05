@@ -18,12 +18,16 @@ find_package(odri_msgs REQUIRED)
 find_package(odri_control_interface REQUIRED)
 
 set(ODRI_INTERFACE_SRC src/robot_interface.cpp)
+set(ODRI_STATE_MACHINE_SRC src/robot_state_machine.cpp)
 
 include_directories(include ${ODRI_CONTROL_INTERFACE_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 add_executable(robot_interface ${ODRI_INTERFACE_SRC})
+add_executable(robot_state_machine ${ODRI_STATE_MACHINE_SRC})
 ament_target_dependencies(robot_interface rclcpp odri_msgs)
+ament_target_dependencies(robot_state_machine rclcpp odri_msgs)
 target_link_libraries(robot_interface odri_control_interface::odri_control_interface)
+target_link_libraries(robot_state_machine odri_control_interface::odri_control_interface)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -36,6 +40,7 @@ if(BUILD_TESTING)
 endif()
 
 install(TARGETS robot_interface DESTINATION lib/${PROJECT_NAME})
+install(TARGETS robot_state_machine DESTINATION lib/${PROJECT_NAME})
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
