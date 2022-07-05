@@ -5,6 +5,7 @@
   <version>0.0.0</version>
   <description>This package provides a user interface to send/receive messages to ODRI master board</description>
   <maintainer email="jmarti@iri.upc.edu">pepms</maintainer>
+  <maintainer email="hduarte@iri.upc.edu">hduarte</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
