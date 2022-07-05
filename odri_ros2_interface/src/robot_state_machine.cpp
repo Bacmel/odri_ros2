@@ -112,6 +112,11 @@ void RobotStateMachine::callbackTimerSendCommand()
             odri_robot_->joints->SetDesiredVelocities(vec_zero);
             odri_robot_->joints->SetPositionGains(params_.safety_gain);
             odri_robot_->joints->SetVelocityGains(params_.safety_damping);
+            Eigen::VectorXd sent_torques = odri_robot_->GetJoints()->GetSentTorques();
+            for (long int i = 0; i < sent_torques.size(); i++)
+            {
+                RCLCPP_INFO_STREAM(get_logger(), "Joint " << i << ": " << sent_torques(i));
+            }
             break;
 
         default:
