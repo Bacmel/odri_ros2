@@ -8,6 +8,7 @@ from launch import LaunchDescription
 
 def generate_launch_description():
     ld = LaunchDescription()
+
     config = os.path.join(get_package_share_directory('odri_ros2_interface'), 'config', 'params.yaml')
 
     node = Node(package='odri_ros2_interface',
@@ -15,7 +16,10 @@ def generate_launch_description():
                 executable='robot_state_machine',
                 output='screen',
                 emulate_tty=True,
-                parameters=[config])
+                parameters=[config],
+                remappings=[('robot_state', '/odri/robot_state'),
+                            ('robot_command', '/odri/robot_command')])
+    
     ld.add_action(node)
 
     return ld
