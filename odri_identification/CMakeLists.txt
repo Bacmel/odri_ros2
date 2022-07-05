@@ -14,10 +14,10 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(odri_msgs REQUIRED)
+find_package(odri_ros2_msgs REQUIRED)
 
 add_executable(flying_arm_identification src/flying_arm_identification.cpp)
-ament_target_dependencies(flying_arm_identification rclcpp odri_msgs)
+ament_target_dependencies(flying_arm_identification rclcpp odri_ros2_msgs)
 target_include_directories(
   flying_arm_identification PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                        $<INSTALL_INTERFACE:include> ${EIGEN3_INCLUDE_DIR})

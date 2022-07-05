@@ -14,13 +14,13 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(odri_msgs REQUIRED)
+find_package(odri_ros2_msgs REQUIRED)
 
 add_executable(example_robot src/example_robot.cpp)
 add_executable(stretch_robot src/stretch_robot.cpp)
 
-ament_target_dependencies(example_robot rclcpp odri_msgs)
-ament_target_dependencies(stretch_robot rclcpp odri_msgs)
+ament_target_dependencies(example_robot rclcpp odri_ros2_msgs)
+ament_target_dependencies(stretch_robot rclcpp odri_ros2_msgs)
 
 target_include_directories(
   example_robot PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

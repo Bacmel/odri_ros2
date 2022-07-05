@@ -12,9 +12,9 @@
 #include "rclcpp_components/register_node_macro.hpp"
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
 
-#include "odri_msgs/srv/transition_command.hpp"
-#include "odri_msgs/msg/robot_state.hpp"
-#include "odri_msgs/msg/robot_command.hpp"
+#include "odri_ros2_msgs/srv/transition_command.hpp"
+#include "odri_ros2_msgs/msg/robot_state.hpp"
+#include "odri_ros2_msgs/msg/robot_command.hpp"
 
 class FlyingArmIdentification : public rclcpp::Node
 {
@@ -27,20 +27,20 @@ class FlyingArmIdentification : public rclcpp::Node
     void createCommands();
 
     void callbackTimerPublishCommand();
-    void callbackRobotState(const odri_msgs::msg::RobotState::SharedPtr msg);
+    void callbackRobotState(const odri_ros2_msgs::msg::RobotState::SharedPtr msg);
 
     rcl_interfaces::msg::SetParametersResult callbackParameters(const std::vector<rclcpp::Parameter> &parameters);
 
   private:
     rclcpp::TimerBase::SharedPtr timer_publish_command_;
 
-    rclcpp::Subscription<odri_msgs::msg::RobotState>::SharedPtr  sub_robot_state_;
-    rclcpp::Publisher<odri_msgs::msg::RobotCommand>::SharedPtr   pub_robot_command_;
-    rclcpp::Client<odri_msgs::srv::TransitionCommand>::SharedPtr client_odri_interface_;
+    rclcpp::Subscription<odri_ros2_msgs::msg::RobotState>::SharedPtr  sub_robot_state_;
+    rclcpp::Publisher<odri_ros2_msgs::msg::RobotCommand>::SharedPtr   pub_robot_command_;
+    rclcpp::Client<odri_ros2_msgs::srv::TransitionCommand>::SharedPtr client_odri_interface_;
 
     OnSetParametersCallbackHandle::SharedPtr callback_handle_;
 
-    odri_msgs::msg::RobotCommand msg_robot_command_;
+    odri_ros2_msgs::msg::RobotCommand msg_robot_command_;
 
     struct SetPoint
     {

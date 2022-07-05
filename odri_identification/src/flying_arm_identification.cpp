@@ -4,11 +4,11 @@
 
 FlyingArmIdentification::FlyingArmIdentification(const std::string &node_name) : Node(node_name)
 {
-    sub_robot_state_ = create_subscription<odri_msgs::msg::RobotState>(
+    sub_robot_state_ = create_subscription<odri_ros2_msgs::msg::RobotState>(
         "robot_state", rclcpp::QoS(1),
         std::bind(&FlyingArmIdentification::callbackRobotState, this, std::placeholders::_1));
 
-    pub_robot_command_ = create_publisher<odri_msgs::msg::RobotCommand>("robot_command", 1);
+    pub_robot_command_ = create_publisher<odri_ros2_msgs::msg::RobotCommand>("robot_command", 1);
 
     timer_publish_command_ = create_wall_timer(std::chrono::duration<double, std::milli>(2.5),
                                                std::bind(&FlyingArmIdentification::callbackTimerPublishCommand, this));
@@ -16,7 +16,7 @@ FlyingArmIdentification::FlyingArmIdentification(const std::string &node_name) :
     callback_handle_ = this->add_on_set_parameters_callback(
         std::bind(&FlyingArmIdentification::callbackParameters, this, std::placeholders::_1));
 
-    client_odri_interface_ = create_client<odri_msgs::srv::TransitionCommand>("/robot_interface/state_transition");
+    client_odri_interface_ = create_client<odri_ros2_msgs::srv::TransitionCommand>("/robot_interface/state_transition");
 
     got_initial_position_     = false;
     counter_initial_position_ = 0;
@@ -100,7 +100,7 @@ void FlyingArmIdentification::callbackTimerPublishCommand()
     {
         for (std::size_t i = 0; i < 2; ++i)
         {
-            odri_msgs::msg::MotorCommand command;
+            odri_ros2_msgs::msg::MotorCommand command;
 
             if (brought_to_init_)
             {
@@ -132,7 +132,7 @@ void FlyingArmIdentification::callbackTimerPublishCommand()
     }
 }
 
-void FlyingArmIdentification::callbackRobotState(const odri_msgs::msg::RobotState::SharedPtr msg)
+void FlyingArmIdentification::callbackRobotState(const odri_ros2_msgs::msg::RobotState::SharedPtr msg)
 {
     pos_error_(0) = msg->motor_states[0].position;
     pos_error_(1) = msg->motor_states[1].position;
@@ -157,10 +157,10 @@ rcl_interfaces::msg::SetParametersResult FlyingArmIdentification::callbackParame
                     RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
                 }
 
-                auto request     = std::make_shared<odri_msgs::srv::TransitionCommand::Request>();
+                auto request     = std::make_shared<odri_ros2_msgs::srv::TransitionCommand::Request>();
                 request->command = "enable";
                 auto response_received_callback =
-                    [this](rclcpp::Client<odri_msgs::srv::TransitionCommand>::SharedFuture future) {
+                    [this](rclcpp::Client<odri_ros2_msgs::srv::TransitionCommand>::SharedFuture future) {
                         auto result              = future.get();
                         params_.publish_commands = result->result == "enabled";
                         command_params_.curr_idx = result->result == "enabled" ? 0 : command_params_.curr_idx;

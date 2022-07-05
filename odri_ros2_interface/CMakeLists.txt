@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(odri_interface)
+project(odri_ros2_interface)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
@@ -14,7 +14,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(odri_msgs REQUIRED)
+find_package(odri_ros2_msgs REQUIRED)
 find_package(odri_control_interface REQUIRED)
 
 set(ODRI_INTERFACE_SRC src/robot_interface.cpp)
@@ -24,8 +24,8 @@ include_directories(include ${ODRI_CONTROL_INTERFACE_DIRS} ${EIGEN3_INCLUDE_DIR}
 
 add_executable(robot_interface ${ODRI_INTERFACE_SRC})
 add_executable(robot_state_machine ${ODRI_STATE_MACHINE_SRC})
-ament_target_dependencies(robot_interface rclcpp odri_msgs)
-ament_target_dependencies(robot_state_machine rclcpp odri_msgs)
+ament_target_dependencies(robot_interface rclcpp odri_ros2_msgs)
+ament_target_dependencies(robot_state_machine rclcpp odri_ros2_msgs)
 target_link_libraries(robot_interface odri_control_interface::odri_control_interface)
 target_link_libraries(robot_state_machine odri_control_interface::odri_control_interface)
 

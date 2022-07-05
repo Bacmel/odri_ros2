@@ -8,9 +8,9 @@ from launch import LaunchDescription
 
 def generate_launch_description():
     ld = LaunchDescription()
-    odri_iface_config = os.path.join(get_package_share_directory('odri_interface'), 'config', 'params.yaml')
+    odri_iface_config = os.path.join(get_package_share_directory('odri_ros2_interface'), 'config', 'params.yaml')
 
-    odri_iface_node = Node(package='odri_interface',
+    odri_iface_node = Node(package='odri_ros2_interface',
                            name='robot_interface',
                            executable='robot_interface',
                            parameters=[odri_iface_config],

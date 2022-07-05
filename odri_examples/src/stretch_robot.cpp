@@ -4,10 +4,10 @@
 
 StretchRobot::StretchRobot(const std::string &node_name) : Node(node_name)
 {
-    sub_robot_state_ = create_subscription<odri_msgs::msg::RobotFullState>(
+    sub_robot_state_ = create_subscription<odri_ros2_msgs::msg::RobotFullState>(
         "robot_state", rclcpp::QoS(1), std::bind(&StretchRobot::callbackRobotState, this, std::placeholders::_1));
 
-    pub_robot_command_ = create_publisher<odri_msgs::msg::RobotCommand>("robot_command", 1);
+    pub_robot_command_ = create_publisher<odri_ros2_msgs::msg::RobotCommand>("robot_command", 1);
 
     timer_change_command_  = create_wall_timer(std::chrono::duration<double>(1),
                                                std::bind(&StretchRobot::callbackTimerChangeCommand, this));
@@ -17,7 +17,7 @@ StretchRobot::StretchRobot(const std::string &node_name) : Node(node_name)
     callback_handle_ = this->add_on_set_parameters_callback(
         std::bind(&StretchRobot::callbackParameters, this, std::placeholders::_1));
 
-    client_odri_interface_ = create_client<odri_msgs::srv::TransitionCommand>("/robot_state_machine/state_transition");
+    client_odri_interface_ = create_client<odri_ros2_msgs::srv::TransitionCommand>("/robot_state_machine/state_transition");
 
     got_initial_position_     = false;
     counter_initial_position_ = 0;
@@ -45,7 +45,7 @@ void StretchRobot::callbackTimerPublishCommand()
     {
         for (std::size_t i = 0; i < 2; ++i)
         {
-            odri_msgs::msg::MotorCommand command;
+            odri_ros2_msgs::msg::MotorCommand command;
 
             if (brought_to_init_)
             {
@@ -81,7 +81,7 @@ void StretchRobot::callbackTimerPublishCommand()
     }
 }
 
-void StretchRobot::callbackRobotState(const odri_msgs::msg::RobotFullState::SharedPtr msg)
+void StretchRobot::callbackRobotState(const odri_ros2_msgs::msg::RobotFullState::SharedPtr msg)
 {
     pos_error_(0) = msg->motor_states[0].position;
     pos_error_(1) = msg->motor_states[1].position;
@@ -106,10 +106,10 @@ rcl_interfaces::msg::SetParametersResult StretchRobot::callbackParameters(
                     RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
                 }
 
-                auto request     = std::make_shared<odri_msgs::srv::TransitionCommand::Request>();
+                auto request     = std::make_shared<odri_ros2_msgs::srv::TransitionCommand::Request>();
                 request->command = "start";
                 auto response_received_callback =
-                    [this](rclcpp::Client<odri_msgs::srv::TransitionCommand>::SharedFuture future) {
+                    [this](rclcpp::Client<odri_ros2_msgs::srv::TransitionCommand>::SharedFuture future) {
                         auto result              = future.get();
                         params_.publish_commands = result->result == "RUNNING";
                         RCLCPP_INFO_STREAM(get_logger(), "Result: " << result->result);

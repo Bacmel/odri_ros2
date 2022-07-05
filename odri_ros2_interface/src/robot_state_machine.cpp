@@ -1,4 +1,4 @@
-#include "odri_interface/robot_state_machine.hpp"
+#include "odri_ros2_interface/robot_state_machine.hpp"
 
 namespace odri_ros2_interface
 {
@@ -8,13 +8,13 @@ RobotStateMachine::RobotStateMachine(const std::string &node_name) : rclcpp::Nod
     declareParameters();
     createOdriRobot(params_.robot_yaml_path);
 
-    pub_robot_state_ = create_publisher<odri_msgs::msg::RobotFullState>("robot_state", 1);
+    pub_robot_state_ = create_publisher<odri_ros2_msgs::msg::RobotFullState>("robot_state", 1);
 
-    sub_motor_command_ = create_subscription<odri_msgs::msg::RobotCommand>(
+    sub_motor_command_ = create_subscription<odri_ros2_msgs::msg::RobotCommand>(
         "robot_command", rclcpp::QoS(1),
         std::bind(&RobotStateMachine::callbackRobotCommand, this, std::placeholders::_1));
 
-    srv_sm_transition_ = create_service<odri_msgs::srv::TransitionCommand>(
+    srv_sm_transition_ = create_service<odri_ros2_msgs::srv::TransitionCommand>(
         std::string(std::string(get_name()) + "/state_transition").c_str(),
         std::bind(&RobotStateMachine::transitionRequest, this, std::placeholders::_1, std::placeholders::_2),
         rmw_qos_profile_services_default);
@@ -80,9 +80,9 @@ void RobotStateMachine::callbackTimerSendCommand()
     robot_state_msg_.header.stamp = get_clock()->now();
     robot_state_msg_.motor_states.clear();
 
-    for (std::size_t i = 0; i < positions_.size(); ++i)
+    for (long int i = 0; i < positions_.size(); ++i)
     {
-        odri_msgs::msg::MotorState m_state;
+        odri_ros2_msgs::msg::MotorState m_state;
 
         m_state.position = positions_(i);
         m_state.velocity = velocities_(i);
@@ -137,7 +137,7 @@ void RobotStateMachine::callbackTimerSendCommand()
     }
 }
 
-void RobotStateMachine::callbackRobotCommand(const odri_msgs::msg::RobotCommand::SharedPtr msg)
+void RobotStateMachine::callbackRobotCommand(const odri_ros2_msgs::msg::RobotCommand::SharedPtr msg)
 {
     if (current_state_ == StateType::Running)
     {
@@ -153,8 +153,8 @@ void RobotStateMachine::callbackRobotCommand(const odri_msgs::msg::RobotCommand:
     }
 }
 
-void RobotStateMachine::transitionRequest(const std::shared_ptr<odri_msgs::srv::TransitionCommand::Request>  request,
-                                          const std::shared_ptr<odri_msgs::srv::TransitionCommand::Response> response)
+void RobotStateMachine::transitionRequest(const std::shared_ptr<odri_ros2_msgs::srv::TransitionCommand::Request>  request,
+                                          const std::shared_ptr<odri_ros2_msgs::srv::TransitionCommand::Response> response)
 {
     RCLCPP_INFO_STREAM(get_logger(), "Service request received");
 
@@ -237,7 +237,7 @@ bool RobotStateMachine::smEnable()
         RCLCPP_INFO_STREAM(get_logger(), "\nThese are the offsets");
         Eigen::VectorXd current_pos = odri_robot_->GetJoints()->GetPositions();
 
-        for (size_t i = 0; i < current_pos.size(); i++)
+        for (long int i = 0; i < current_pos.size(); i++)
         {
             RCLCPP_INFO_STREAM(get_logger(), "Joint " << i << ": " << current_pos(i));
         }
