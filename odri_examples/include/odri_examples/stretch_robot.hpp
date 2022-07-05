@@ -7,7 +7,7 @@
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
 
 #include "odri_msgs/srv/transition_command.hpp"
-#include "odri_msgs/msg/robot_state.hpp"
+#include "odri_msgs/msg/robot_full_state.hpp"
 #include "odri_msgs/msg/robot_command.hpp"
 
 class StretchRobot : public rclcpp::Node
@@ -19,7 +19,7 @@ class StretchRobot : public rclcpp::Node
   private:
     void callbackTimerChangeCommand();
     void callbackTimerPublishCommand();
-    void callbackRobotState(const odri_msgs::msg::RobotState::SharedPtr msg);
+    void callbackRobotState(const odri_msgs::msg::RobotFullState::SharedPtr msg);
 
     rcl_interfaces::msg::SetParametersResult callbackParameters(const std::vector<rclcpp::Parameter> &parameters);
 
@@ -27,7 +27,7 @@ class StretchRobot : public rclcpp::Node
     rclcpp::TimerBase::SharedPtr timer_change_command_;
     rclcpp::TimerBase::SharedPtr timer_publish_command_;
 
-    rclcpp::Subscription<odri_msgs::msg::RobotState>::SharedPtr  sub_robot_state_;
+    rclcpp::Subscription<odri_msgs::msg::RobotFullState>::SharedPtr  sub_robot_state_;
     rclcpp::Publisher<odri_msgs::msg::RobotCommand>::SharedPtr   pub_robot_command_;
     rclcpp::Client<odri_msgs::srv::TransitionCommand>::SharedPtr client_odri_interface_;
 
