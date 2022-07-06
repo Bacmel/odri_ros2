@@ -96,7 +96,7 @@ void RobotStateMachine::callbackTimerSendCommand()
     const Eigen::VectorXd vec_zero = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
     switch (current_state_)
     {
-        case StateType::Running:
+        case StateType::Running: {
             odri_robot_->joints->SetTorques(des_torques_);
             odri_robot_->joints->SetDesiredPositions(des_positions_);
             odri_robot_->joints->SetDesiredVelocities(des_velocities_);
@@ -105,8 +105,8 @@ void RobotStateMachine::callbackTimerSendCommand()
             odri_robot_->joints->SetMaximumCurrents(
                 max_currents_(0));  // WARNING: Max current is common for all joints
             break;
-
-        case StateType::Enabled:
+        }
+        case StateType::Enabled: {
             odri_robot_->joints->SetTorques(vec_zero);
             odri_robot_->joints->SetDesiredPositions(params_.safety_position);
             odri_robot_->joints->SetDesiredVelocities(vec_zero);
@@ -118,14 +118,15 @@ void RobotStateMachine::callbackTimerSendCommand()
                 RCLCPP_INFO_STREAM(get_logger(), "Joint " << i << ": " << sent_torques(i));
             }
             break;
-
-        default:
+        }
+        default: {
             odri_robot_->joints->SetTorques(vec_zero);
             odri_robot_->joints->SetDesiredPositions(vec_zero);
             odri_robot_->joints->SetDesiredVelocities(vec_zero);
             odri_robot_->joints->SetPositionGains(vec_zero);
             odri_robot_->joints->SetVelocityGains(vec_zero);
             break;
+        }
     }
 
     if (!odri_robot_->SendCommand())
@@ -278,6 +279,7 @@ bool RobotStateMachine::smStop()
 {
     if (current_state_ == StateType::Running)
     {
+        odri_robot_->GetJoints()->RunSafetyController();
         current_state_ = StateType::Enabled;
         return true;
     }
