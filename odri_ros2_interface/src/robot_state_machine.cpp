@@ -39,6 +39,7 @@ RobotStateMachine::RobotStateMachine(const std::string &node_name) : rclcpp::Nod
     params_.safety_position = vec_zero;
     params_.safety_damping  = vec_zero;
     params_.safety_gain     = vec_zero;
+    params_.safety_current  = vec_zero;
 
     double offset = M_PI / 10;
 
@@ -50,6 +51,9 @@ RobotStateMachine::RobotStateMachine(const std::string &node_name) : rclcpp::Nod
 
     params_.safety_gain[0] = 2;
     params_.safety_gain[1] = 2;
+
+    params_.safety_current[0] = 1;
+    params_.safety_current[1] = 1;
 
     current_state_ = StateType::Idle;
 }
@@ -112,11 +116,8 @@ void RobotStateMachine::callbackTimerSendCommand()
             odri_robot_->joints->SetDesiredVelocities(vec_zero);
             odri_robot_->joints->SetPositionGains(params_.safety_gain);
             odri_robot_->joints->SetVelocityGains(params_.safety_damping);
-            Eigen::VectorXd sent_torques = odri_robot_->GetJoints()->GetSentTorques();
-            for (long int i = 0; i < sent_torques.size(); i++)
-            {
-                RCLCPP_INFO_STREAM(get_logger(), "Joint " << i << ": " << sent_torques(i));
-            }
+            odri_robot_->joints->SetMaximumCurrents(
+                params_.safety_current[0]);  // WARNING: Max current is common for all joints
             break;
         }
         default: {

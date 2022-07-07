@@ -132,6 +132,7 @@ class RobotStateMachine : public rclcpp::Node
         Eigen::VectorXd safety_damping;
         Eigen::VectorXd safety_position;
         Eigen::VectorXd safety_gain;
+        Eigen::VectorXd safety_current;
     } params_;
 
     StateType current_state_;
