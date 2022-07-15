@@ -27,6 +27,7 @@ rosidl_generate_interfaces(
   "interfaces/msg/RobotCommand.msg"
   "interfaces/msg/RobotState.msg"
   "interfaces/msg/RobotFullState.msg"
+  "interfaces/msg/StateCommand.msg"
   "interfaces/srv/TransitionCommand.srv"
   DEPENDENCIES
   std_msgs)

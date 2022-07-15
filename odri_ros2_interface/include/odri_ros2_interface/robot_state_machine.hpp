@@ -11,7 +11,8 @@
 #include "odri_ros2_msgs/msg/driver_state.hpp"
 #include "odri_ros2_msgs/msg/master_board_state.hpp"
 #include "odri_ros2_msgs/msg/robot_command.hpp"
-#include "odri_ros2_msgs/msg/robot_full_state.hpp"
+#include "odri_ros2_msgs/msg/robot_state.hpp"
+#include "odri_ros2_msgs/msg/state_command.hpp"
 #include "odri_ros2_msgs/srv/transition_command.hpp"
 
 #include "odri_control_interface/robot.hpp"
@@ -107,13 +108,15 @@ class RobotStateMachine : public rclcpp::Node
   private:
     rclcpp::TimerBase::SharedPtr timer_send_commands_;
 
-    rclcpp::Publisher<odri_ros2_msgs::msg::RobotFullState>::SharedPtr  pub_robot_state_;
+    rclcpp::Publisher<odri_ros2_msgs::msg::RobotState>::SharedPtr  pub_robot_state_;
+    rclcpp::Publisher<odri_ros2_msgs::msg::StateCommand>::SharedPtr  pub_state_command_;
     rclcpp::Subscription<odri_ros2_msgs::msg::RobotCommand>::SharedPtr sub_motor_command_;
     rclcpp::Service<odri_ros2_msgs::srv::TransitionCommand>::SharedPtr srv_sm_transition_;
 
     std::shared_ptr<odri_control_interface::Robot> odri_robot_;
 
-    odri_ros2_msgs::msg::RobotFullState robot_state_msg_;
+    odri_ros2_msgs::msg::RobotState robot_state_msg_;
+    odri_ros2_msgs::msg::StateCommand state_command_msg_;
 
     Eigen::VectorXd positions_;
     Eigen::VectorXd velocities_;

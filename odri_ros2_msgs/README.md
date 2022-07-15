@@ -15,6 +15,7 @@ Collection of ROS2 messages and services
 - [RobotCommand](interfaces/msg/RobotCommand.msg) : Command send to the robot
 - [RobotState](interfaces/msg/RobotState.msg) : Current state of the robot
 - [RobotFullState](interfaces/msg/RobotFullState.msg) : Current state of the robot + state of the finite state machine
+- [StateCommand](interfaces/msg/StateCommand.msg) : Current state of the finite state machine
 
 ## Services
 

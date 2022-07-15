@@ -8,7 +8,8 @@ RobotStateMachine::RobotStateMachine(const std::string &node_name) : rclcpp::Nod
     declareParameters();
     createOdriRobot(params_.robot_yaml_path);
 
-    pub_robot_state_ = create_publisher<odri_ros2_msgs::msg::RobotFullState>("robot_state", 1);
+    pub_robot_state_ = create_publisher<odri_ros2_msgs::msg::RobotState>("robot_state", 1);
+    pub_state_command_ = create_publisher<odri_ros2_msgs::msg::StateCommand>("state_command", 1);
 
     sub_motor_command_ = create_subscription<odri_ros2_msgs::msg::RobotCommand>(
         "robot_command", rclcpp::QoS(1),
@@ -80,6 +81,11 @@ void RobotStateMachine::callbackTimerSendCommand()
     robot_state_msg_.header.stamp = get_clock()->now();
     robot_state_msg_.motor_states.clear();
 
+    state_command_msg_.header.stamp = get_clock()->now();
+    state_command_msg_.state_id = (int) current_state_;
+    state_command_msg_.state_name = state_name_map.at(current_state_);
+    pub_state_command_->publish(state_command_msg_);
+
     for (long int i = 0; i < positions_.size(); ++i)
     {
         odri_ros2_msgs::msg::MotorState m_state;
@@ -90,7 +96,6 @@ void RobotStateMachine::callbackTimerSendCommand()
 
         robot_state_msg_.motor_states.push_back(m_state);
     }
-    robot_state_msg_.sm_state = state_name_map.at(current_state_);
     pub_robot_state_->publish(robot_state_msg_);
 
     const Eigen::VectorXd vec_zero = Eigen::VectorXd::Zero(odri_robot_->GetJoints()->GetNumberMotors());
