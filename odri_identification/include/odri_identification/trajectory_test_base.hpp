@@ -5,8 +5,6 @@
 #include <Eigen/Dense>
 
 #include <rclcpp/rclcpp.hpp>
-#include "rclcpp_components/register_node_macro.hpp"
-#include "rcl_interfaces/msg/set_parameters_result.hpp"
 
 #include "odri_ros2_msgs/srv/transition_command.hpp"
 #include "odri_ros2_msgs/msg/robot_state.hpp"
@@ -44,25 +42,38 @@ class TrajectoryTestAbstract : public rclcpp::Node
     virtual ~TrajectoryTestAbstract();
 
   private:
-    rclcpp::Publisher<odri_ros2_msgs::msg::RobotCommand>::SharedPtr   pub_robot_command_;
-    rclcpp::Client<odri_ros2_msgs::srv::TransitionCommand>::SharedPtr client_odri_interface_;
+    virtual void initializeParameters();
+    virtual void createCommands();
+    virtual void updateCommand();
+    virtual void restartCommand();
 
+    bool is_running();
+    void callbackTimerPublishCommand();
+    void callbackRobotState(const odri_ros2_msgs::msg::RobotState::SharedPtr msg);
 
+    rclcpp::Publisher<odri_ros2_msgs::msg::RobotCommand>::SharedPtr    pub_robot_command_;
+    rclcpp::Subscriber<odri_ros2_msgs::msg::RobotState>::SharedPtr sub_robot_state_;
+    rclcpp::TimerBase::SharedPtr                                       timer_publish_command_;
 
-  struct TrajectoryTestAbstractParams {
+    struct TrajectoryTestAbstractParams
+    {
+        odri_ros2_msgs::msg::RobotCommand command;
 
-  } base_params_;
+        std::string state{"idle"};
+        double periode{2.5};
+    } base_params_;
 };
 
 class TrajectoryTestFactory
 {
   public:
-  ~TrajectoryTestFactory();
+    ~TrajectoryTestFactory();
 
-  static std::shared_ptr<TrajectoryTestAbstract> create(const std::string& node_name, const TrajectoryTestTypes& test_type);
+    static std::shared_ptr<TrajectoryTestAbstract> create(const std::string&         node_name,
+                                                          const TrajectoryTestTypes& test_type);
 
   private:
-  TrajectoryTestFactory();
+    TrajectoryTestFactory();
 };
 
 }  // namespace odri_ros2_identification

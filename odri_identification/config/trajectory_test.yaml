@@ -1,0 +1,12 @@
+motor_test:
+  ros__parameters:
+    periode: 2.5 # periode of publish in ms
+    
+    wave:
+      amplitude: 1 # in radian
+      freq: 0.05   # in hz
+    stretch:
+      nb: 10     # number of turns during one periode
+      periode: 5 # in seconds
+    offline:
+      trajectory_name: "/home/hugo/projects/odri_control_ws/src/odri_ros2/odri_identification/config/joint_by_joint_trapezoidal_trajectory.csv"

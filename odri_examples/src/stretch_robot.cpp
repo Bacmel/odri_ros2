@@ -4,7 +4,7 @@
 
 StretchRobot::StretchRobot(const std::string &node_name) : Node(node_name)
 {
-    sub_robot_state_ = create_subscription<odri_ros2_msgs::msg::RobotFullState>(
+    sub_robot_state_ = create_subscription<odri_ros2_msgs::msg::RobotState>(
         "robot_state", rclcpp::QoS(1), std::bind(&StretchRobot::callbackRobotState, this, std::placeholders::_1));
 
     pub_robot_command_ = create_publisher<odri_ros2_msgs::msg::RobotCommand>("robot_command", 1);
@@ -81,7 +81,7 @@ void StretchRobot::callbackTimerPublishCommand()
     }
 }
 
-void StretchRobot::callbackRobotState(const odri_ros2_msgs::msg::RobotFullState::SharedPtr msg)
+void StretchRobot::callbackRobotState(const odri_ros2_msgs::msg::RobotState::SharedPtr msg)
 {
     pos_error_(0) = msg->motor_states[0].position;
     pos_error_(1) = msg->motor_states[1].position;
