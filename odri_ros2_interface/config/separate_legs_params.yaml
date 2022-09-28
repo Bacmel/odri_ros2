@@ -1,0 +1,3 @@
+robot_interface:
+  ros__parameters:
+    robot_yaml_path: '/home/hidro/odri_ws/src/odri_ros2/odri_examples/config/robots/separate_legs.yaml'

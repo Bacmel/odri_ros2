@@ -25,6 +25,7 @@ find_package(odri_control_interface REQUIRED)
 # ---- MOTOR TEST LIBRARY ----
 list(APPEND ODRI_INTERFACE_TOOLS_SRC src/robot_interface.cpp)
 list(APPEND ODRI_INTERFACE_TOOLS_SRC src/robot_state_machine.cpp)
+list(APPEND ODRI_INTERFACE_TOOLS_SRC src/odri_ros2_interface.cpp)
 
 add_library(odri_interface_tools SHARED ${ODRI_INTERFACE_TOOLS_SRC})
 
@@ -48,7 +49,7 @@ target_link_libraries(${ROBOT_INTERFACE_EXEC_NAME} odri_interface_tools)
 
 list(APPEND ${PROJECT_NAME}_INSTALL_TARGETS ${ROBOT_INTERFACE_EXEC_NAME})
 
-# ---- ROBOT INTERFACE NODE ----
+# ---- ROBOT STATE MACHINE NODE ----
 list(APPEND ROBOT_STATE_MACHINE_SRC src/nodes/robot_state_machine.cpp)
 
 set(ROBOT_STATE_MACHINE_EXEC_NAME robot_state_machine)
@@ -57,6 +58,16 @@ add_executable(${ROBOT_STATE_MACHINE_EXEC_NAME} ${ROBOT_STATE_MACHINE_SRC})
 target_link_libraries(${ROBOT_STATE_MACHINE_EXEC_NAME} odri_interface_tools)
 
 list(APPEND ${PROJECT_NAME}_INSTALL_TARGETS ${ROBOT_STATE_MACHINE_EXEC_NAME})
+
+# ---- ODRI ROS2 INTERFACE NODE ----
+list(APPEND ODRI_ROS2_INTERFACE_SRC src/nodes/odri_ros2_interface.cpp)
+
+set(ODRI_ROS2_INTERFACE_EXEC_NAME odri_ros2_interface)
+
+add_executable(${ODRI_ROS2_INTERFACE_EXEC_NAME} ${ODRI_ROS2_INTERFACE_SRC})
+target_link_libraries(${ODRI_ROS2_INTERFACE_EXEC_NAME} odri_interface_tools)
+
+list(APPEND ${PROJECT_NAME}_INSTALL_TARGETS ${ODRI_ROS2_INTERFACE_EXEC_NAME})
 
 # ---- INSTALL TARGETS ----
 ament_export_targets(${PROJECT_NAME}Targets HAS_LIBRARY_TARGET)

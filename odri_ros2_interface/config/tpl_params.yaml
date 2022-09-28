@@ -1,0 +1,3 @@
+odri_ros2_interface:
+  ros__parameters:
+    robot_yaml_path: '/path/to/robot_config_file.yaml'

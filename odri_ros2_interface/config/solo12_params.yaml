@@ -1,0 +1,7 @@
+odri_ros2_interface:
+  ros__parameters:
+    robot_yaml_path: '/home/aschroeter/devel/odri_control_interface/demos/config_solo12.yaml'
+    parking_position: [0.0, 0.7, -1.4,
+-                     -0.0, 0.7, -1.4,
+-                      0.0, -0.7, 1.4,
+-                     -0.0, -0.7, 1.4]

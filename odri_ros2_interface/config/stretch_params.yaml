@@ -1,3 +1,0 @@
-robot_state_machine:
-  ros__parameters:
-    robot_yaml_path: "/home/hidro/odri_ws/src/odri_ros2/odri_examples/config/robots/stretch_legs.yaml"
